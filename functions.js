@@ -1,63 +1,43 @@
 // getYieldForPlant
-const getYieldForPlant = (plant, environmentFactors) => {
+const getYieldForPlant = (input, environmentFactors) => {
     const newArray = [];
-    for (x in environmentFactors){
-        newArray.push(((100 + (plant['factor'][x][environmentFactors[x]]) )/100))
+    if (!environmentFactors){
+        return input['crop']['yield'];
     }
-
-    const multiplyWithInitial = newArray.reduce(
-    (previousValue, currentValue) => previousValue * currentValue,
-    plant['yield']
-    );
-
-    return multiplyWithInitial;
-
-}
-
-
-// getYieldForCrop
-const getYieldForCrop = (input, environmentFactors) => {
-    const yieldWithoutEnvironment = input['crop']['yield']*input['numCrops'];
-
-    const newArray = [];
-    for (x in environmentFactors){
+    else{
+        for (x in environmentFactors){
         newArray.push(((100 + (input['crop']['factor'][x][environmentFactors[x]]) )/100))
     }
 
     const multiplyWithInitial = newArray.reduce(
     (previousValue, currentValue) => previousValue * currentValue,
-    yieldWithoutEnvironment
+    input['crop']['yield']
     );
 
     return multiplyWithInitial;
+    }
+}
 
+
+// getYieldForCrop
+const getYieldForCrop = (input, environmentFactors) => {
+    return getYieldForPlant(input, environmentFactors)*input['numCrops'];
 }
 
 
 //getTotalYield
 const getTotalYield = (crops, environmentFactors) => {
     const arrayOfCrops = crops['crops'];
-    const finalArray = [];
+    const arrayOfYields = [];
     for (z in arrayOfCrops){
-
-        const newArray = [];
-        for (x in environmentFactors){
-            newArray.push(((100 + (arrayOfCrops[z]['crop']['factor'][x][environmentFactors[x]]) )/100))
-        }
-       
-        const multiplyWithInitial = newArray.reduce(
-        (previousValue, currentValue) => previousValue * currentValue,
-        arrayOfCrops[z]['crop']['yield']*arrayOfCrops[z]['numCrops']
-        );
-        finalArray.push(multiplyWithInitial);
-            
+        let input = arrayOfCrops[z];
+        arrayOfYields.push(getYieldForCrop(input, environmentFactors));
     }
-    const addAllYields = finalArray.reduce(
+    const addAllYields = arrayOfYields.reduce(
     (previousValue, currentValue) => previousValue + currentValue,
     0
     );
-    
-    return addAllYields
+    return addAllYields;
 }    
 
 
@@ -68,75 +48,34 @@ const getCostsForCrop = input => {
 
 
 //getRevenueForCrop
-const getRevenueForCrop = (crop, environmentFactors) => {
-    const revenueWithoutEnvironment = crop['salePrice']*crop['yield'];
-
-    const newArray = [];
-    for (x in environmentFactors){
-        newArray.push(((100 + (crop['factor'][x][environmentFactors[x]]) )/100))
-    }
-
-    const multiplyWithInitial = newArray.reduce(
-    (previousValue, currentValue) => previousValue * currentValue,
-    revenueWithoutEnvironment
-    );
-
-    return multiplyWithInitial;
+const getRevenueForCrop = (input, environmentFactors) => {
+    return getYieldForCrop(input, environmentFactors)*input['crop']['salePrice'];
 }
 
 
 // getProfitForCrop
-const getProfitForCrop = (crop, environmentFactors) => {
-    const cost = crop['numCrops']*crop['cost'];
-    const revenueWithoutEnvironment = crop['salePrice']*crop['yield']*crop['numCrops'];
-    const newArray = [];
-
-    for (x in environmentFactors){
-        newArray.push(((100 + (crop['factor'][x][environmentFactors[x]]) )/100))
-    }
-
-    const multiplyWithInitial = newArray.reduce(
-    (previousValue, currentValue) => previousValue * currentValue,
-    revenueWithoutEnvironment
-    );
-
-    const revenueWithEnvironment = multiplyWithInitial;
-    const profit = revenueWithEnvironment - cost;
-    return profit;
+const getProfitForCrop = (input, environmentFactors) => {
+    return getRevenueForCrop(input, environmentFactors) - getCostsForCrop(input);
 }
 
 
 // getTotalProfit
-const getTotalProfit = (crops, environmentFactors) => {
+const getTotalProfit = (crops, environmentalFactors) => {
+
     const arrayOfCrops = crops['crops'];
-    const arrayCosts = arrayOfCrops.map(x => (x['crop']['numCrops']*x['crop']['cost']));
-    const totalCosts = arrayCosts.reduce(
-        (previousValue, currentValue) => previousValue + currentValue,
-        0
-    );
-    const finalArray = [];
+    const arrayOfProfits = [];
 
     for (z in arrayOfCrops){
-
-        const newArray = [];
-        for (x in environmentFactors){
-            newArray.push(((100 + (arrayOfCrops[z]['crop']['factor'][x][environmentFactors[x]]) )/100))
-        }
-        
-        const multiplyWithInitial = newArray.reduce(
-        (previousValue, currentValue) => previousValue * currentValue,
-        arrayOfCrops[z]['crop']['yield']*arrayOfCrops[z]['crop']['salePrice']*arrayOfCrops[z]['crop']['numCrops']
-        );
-        finalArray.push(multiplyWithInitial); 
+        let input = arrayOfCrops[z];
+        arrayOfProfits.push(getProfitForCrop(input, environmentalFactors));
     }
-    
-    const addAllRevenues = finalArray.reduce(
+
+    const addAllProfits = arrayOfProfits.reduce(
     (previousValue, currentValue) => previousValue + currentValue,
     0
     );
     
-    const totalProfit = addAllRevenues - totalCosts;
-    return totalProfit;
+    return addAllProfits;
 }
 
 
